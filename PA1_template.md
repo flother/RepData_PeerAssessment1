@@ -14,7 +14,8 @@ First we should load the libraries. We'll be using `readr` for reading the CSV,
 manipulate dates and times, `ggplot2` to output plots, and finally `scales` for
 its `comma` function.
 
-```{r, message=F, warning=F}
+
+```r
 library(dplyr)
 library(ggplot2)
 library(lubridate)
@@ -30,7 +31,8 @@ processed so that the first column (`steps`) is parsed as an integer, the second
 `datetime` column. Finally, the `date` and `interval` columns are discarded so
 we're left with a two-column data table.
 
-```{r}
+
+```r
 activity <- read_csv("activity.zip", col_types = "iDi") %>%
   mutate(datetime = parse_datetime(paste(date, str_pad(interval, 4, "left", 0)), 
                                    "%Y-%m-%d %H%M")) %>%
@@ -39,11 +41,23 @@ activity <- read_csv("activity.zip", col_types = "iDi") %>%
 summary(activity)
 ```
 
+```
+##     datetime                       steps       
+##  Min.   :2012-10-01 00:00:00   Min.   :  0.00  
+##  1st Qu.:2012-10-16 05:58:45   1st Qu.:  0.00  
+##  Median :2012-10-31 11:57:30   Median :  0.00  
+##  Mean   :2012-10-31 11:57:30   Mean   : 37.38  
+##  3rd Qu.:2012-11-15 17:56:15   3rd Qu.: 12.00  
+##  Max.   :2012-11-30 23:55:00   Max.   :806.00  
+##                                NA's   :2304
+```
+
 Now we're ready to answer the questions asked in the assignment. We can
 calculate the total number of steps taken each day, and then plot a histogram of
 the data.
 
-```{r histogram_nas}
+
+```r
 steps.per.day <- activity %>%
   mutate(date = round_date(datetime, "day")) %>%
   group_by(date) %>%
@@ -58,19 +72,34 @@ ggplot(steps.per.day, aes(steps)) +
   theme_minimal()
 ```
 
+![plot of chunk histogram_nas](figure/histogram_nas-1.png) 
+
 Using the same data, we can show the mean and median of the total number of
 steps taken each day.
 
-```{r}
+
+```r
 mean(steps.per.day$steps, na.rm = TRUE)
+```
+
+```
+## [1] 9203.355
+```
+
+```r
 median(steps.per.day$steps, na.rm = TRUE)
+```
+
+```
+## [1] 8956
 ```
 
 
 Next we can make a time-series plot of the five-minute interval (shown on the
 x-axis) and the number of steps taken, averaged across all days (y-axis).
 
-```{r interval_average}
+
+```r
 activity.by.intervals <- activity %>%
   mutate(hour.minute = strftime(datetime, "%H:%M")) %>%
   group_by(hour.minute) %>%
@@ -85,17 +114,34 @@ ggplot(activity.by.intervals, aes(hour.minute, avg)) +
   theme_minimal()
 ```
 
+![plot of chunk interval_average](figure/interval_average-1.png) 
+
 Using the same data we can show which five-minute interval, on average across
 all the days in the dataset, contains the maximum number of steps.
 
-```{r}
+
+```r
 (activity.by.intervals %>% arrange(desc(avg)))$hour.minute[1]
 ```
 
-The total number of missing values in the `steps` column is `r prettyNum(activity %>% filter(is.na(activity$steps)) %>% count(), big.mark = ",")`:
+```
+## [1] "08:35"
+```
 
-```{r}
+The total number of missing values in the `steps` column is 2,304:
+
+
+```r
 activity %>% count(is.na(steps))
+```
+
+```
+## Source: local data frame [2 x 2]
+## 
+##   is.na(steps)     n
+##          (lgl) (int)
+## 1        FALSE 15264
+## 2         TRUE  2304
 ```
 
 We next want to create a new dataset equivalent to the original but with the
@@ -103,7 +149,8 @@ missing data filled in. As a strategy for filling in the missing values we use
 the mean for that five-minute interval by reusing the `activity.by.intervals`
 variable created earlier.
 
-```{r}
+
+```r
 activity.no.nas <- activity %>%
   mutate(steps = ifelse(is.na(steps),
                         activity.by.intervals[activity.by.intervals$hour.minute == strftime(datetime, "%H:%M")]$avg,
@@ -111,10 +158,19 @@ activity.no.nas <- activity %>%
 activity.no.nas %>% count(is.na(steps))
 ```
 
+```
+## Source: local data frame [1 x 2]
+## 
+##   is.na(steps)     n
+##          (lgl) (int)
+## 1        FALSE 17568
+```
+
 Now we can see a new histogram of the total number of steps taken each day, with
 the missing values filled in.
 
-```{r histogram_no_nas}
+
+```r
 steps.per.day.no.nas <- activity.no.nas %>%
   mutate(date = round_date(datetime, "day")) %>%
   group_by(date) %>%
@@ -129,12 +185,26 @@ ggplot(steps.per.day.no.nas, aes(steps)) +
   theme_minimal()
 ```
 
+![plot of chunk histogram_no_nas](figure/histogram_no_nas-1.png) 
+
 Does filling in the missing values alter the mean and median values reported
 earlier?
 
-```{r}
+
+```r
 mean(steps.per.day.no.nas$steps, na.rm = TRUE)
+```
+
+```
+## [1] 10592.54
+```
+
+```r
 median(steps.per.day.no.nas$steps, na.rm = TRUE)
+```
+
+```
+## [1] 10568.09
 ```
 
 Yes, it does. The impact of imputing missing data on the estimates of the total
@@ -145,7 +215,8 @@ weekdays and weekends. To do this we create a new factor variable with two
 levels, 'weekday' and 'weekend', to indicate whether a given date is a weekday
 or weekend day.
 
-```{r}
+
+```r
 activity.no.nas <- activity.no.nas %>%
   mutate(day.type = factor(ifelse(wday(datetime) %in% c(1, 7),
                                   "Weekend", "Weekday")))
@@ -154,7 +225,8 @@ activity.no.nas <- activity.no.nas %>%
 Now we can make a panel plot containing a time series plot of the five-minute
 interval and the number of steps taken, averaged across weekdays or weekends.
 
-```{r weekdays_weekends}
+
+```r
 activity.by.intervals.na.nas <- activity.no.nas %>%
   mutate(hour.minute = strftime(datetime, "%H:%M")) %>%
   group_by(hour.minute, day.type) %>%
@@ -169,5 +241,7 @@ ggplot(activity.by.intervals.na.nas, aes(hour.minute, avg)) +
   facet_wrap(~ day.type, nrow = 2, ncol = 1) +
   theme_minimal()
 ```
+
+![plot of chunk weekdays_weekends](figure/weekdays_weekends-1.png) 
 
 And with that, we're done.
