@@ -146,8 +146,8 @@ activity %>% count(is.na(steps))
 
 We next want to create a new dataset equivalent to the original but with the
 missing data filled in. As a strategy for filling in the missing values we use
-the mean for that five-minute interval by reusing the `activity.by.intervals`
-variable created earlier.
+the mean for that five-minute interval (across all days) by reusing the
+`activity.by.intervals` variable created earlier.
 
 
 ```r

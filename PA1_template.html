@@ -324,8 +324,8 @@ all the days in the dataset, contains the maximum number of steps.</p>
 
 <p>We next want to create a new dataset equivalent to the original but with the
 missing data filled in. As a strategy for filling in the missing values we use
-the mean for that five-minute interval by reusing the <code>activity.by.intervals</code>
-variable created earlier.</p>
+the mean for that five-minute interval (across all days) by reusing the
+<code>activity.by.intervals</code> variable created earlier.</p>
 
 <pre><code class="r">activity.no.nas &lt;- activity %&gt;%
   mutate(steps = ifelse(is.na(steps),
